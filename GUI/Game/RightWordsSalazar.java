@@ -8,8 +8,10 @@ import java.lang.Math;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.border.Border;//https://www.tutorialspoint.com/swingexamples/add_border_to_panel.htm
 import javax.swing.border.TitledBorder;
+import javax.swing.text.*;
 
 public class RightWordsSalazar{
   // --- attributes ---
@@ -19,8 +21,8 @@ public class RightWordsSalazar{
   private final int FRAME_W, FRAME_H;
   private Border lineBdr;
   private ImageIcon testImage = new ImageIcon("bg.jpg");
-  private Response userActivity = new Response();
-
+  private ButtonResponse buttonResponse = new ButtonResponse();
+  private TextChangeResponse textChangeResponse = new TextChangeResponse();
   /** attributes specific to the Instructions panel*/
   private String[] instructions = new String[]{
                                   "",
@@ -45,9 +47,11 @@ public class RightWordsSalazar{
   private JPanel /*gameBackgroundPanel,*/ editOptionsPn, topPn, letterBankPn, wordCountPn, wordCountInnerPn;
   private JFrame gameFrame;
   private JButton letterBtns[] = new JButton[7], clearBtn, submitBtn, finishBtn;
-  private JTextField currentWordTF;
+  private boolean isButtonEnabled[] = new boolean[7];
+  private CAPSJTextField currentWordTF;
   private JLabel validWordsLbl, totalPointsLbl;
   private String alphabet[] = new String[]{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}, letterBank[] = new String[7], validWords = "";
+  private String previousWordState=""; //this will store the previous state of the currentWordTF, before update the changes
   private int wordCount = 0, totalPoints = 0, maxIndexOfLettersEntered = -1, indexesOfLettersEntered[]=new int[7];
   private PictureBackgroundJPanel gameBackgroundPanel;
 
@@ -143,7 +147,7 @@ public class RightWordsSalazar{
         startButtonContainerPn.add(fillerPn);
         startButtonContainerPn.add(startBtn);
         startButtonContainerPn.setOpaque(false);
-        startBtn.addActionListener(userActivity);
+        startBtn.addActionListener(buttonResponse);
 
 
     instructionsContainerPn = new JPanel();
@@ -188,30 +192,35 @@ public class RightWordsSalazar{
       clearBtn.setPreferredSize(new Dimension(130, 35));
       clearBtn.setFont(F3);
       clearBtn.setForeground(C4);
-      clearBtn.addActionListener(userActivity);
+      clearBtn.addActionListener(buttonResponse);
     submitBtn = new JButton("Submit");
       submitBtn.setPreferredSize(new Dimension(130, 35));
       submitBtn.setFont(F3);
       submitBtn.setForeground(C4);
-      submitBtn.addActionListener(userActivity);
-    for(int x = 0; x < 7; x++){ //Assignment of the 7 letter buttons
-      letterBtns[x]= new JButton(letterBank[x]);
-      letterBtns[x].setFont(F1);
-      letterBtns[x].addActionListener(userActivity);
+      submitBtn.addActionListener(buttonResponse);
+
+    for(int i = 0; i < 7; i++){ //Assignment of the 7 letter buttons
+      letterBtns[i]= new JButton(letterBank[i]);
+      letterBtns[i].setFont(F1);
+      letterBtns[i].addActionListener(buttonResponse);
+      isButtonEnabled[i] = true;
     }
     finishBtn = new JButton("I give up!");
       finishBtn.setPreferredSize(new Dimension(500, 80));
       finishBtn.setFont(F2);
       finishBtn.setToolTipText("Press if you want to give UP");//https://docs.oracle.com/javase/tutorial/uiswing/components/tooltip.html
       finishBtn.setForeground(C4);
-      finishBtn.addActionListener(userActivity);
+      finishBtn.addActionListener(buttonResponse);
 
     /** The current word Text Field */
-    currentWordTF = new JTextField();
+    currentWordTF = new CAPSJTextField();
       currentWordTF.setFont(F1);
       currentWordTF.setPreferredSize(new Dimension(600, 80));
       currentWordTF.setHorizontalAlignment(JTextField.CENTER);//https://docs.oracle.com/javase/7/docs/api/javax/swing/JTextField.html#setHorizontalAlignment(int)
       currentWordTF.setBorder(lineBdr);
+      currentWordTF.addActionListener(buttonResponse);
+      currentWordTF.getDocument().addDocumentListener(textChangeResponse);
+      currentWordTF.getDocument().putProperty("name", "Text Field");
 
     /** The edit options panel */
     editOptionsPn = new JPanel();
@@ -311,16 +320,19 @@ public class RightWordsSalazar{
       gameFrame.setSize(FRAME_W, FRAME_H);
       gameFrame.setResizable(false);
       gameFrame.add(gameBackgroundPanel);
-      gameFrame.setVisible(true);
+      gameFrame.setVisible(false);
   }
 
-  private class Response implements ActionListener{
+  // Button listeners
+  private class ButtonResponse implements ActionListener{
     public void actionPerformed(ActionEvent click){
       Object buttonClicked = click.getSource();
       String currentWordContent = currentWordTF.getText();
       /** Instructions */
       if(buttonClicked == startBtn){
         instructionsFrame.hide();
+        gameFrame.setVisible(true);
+
 
 
       }
@@ -344,24 +356,85 @@ public class RightWordsSalazar{
           totalPointsLbl.setText("Total points: " + totalPoints);
           enableButtons();
         }
+
+        if(buttonClicked == currentWordTF){
+          System.out.println("Entered");
+          wordCount++;
+
+          validWords += currentWordContent + ", ";
+          validWordsLbl.setText(validWords);
+          currentWordContent = "";
+
+          totalPoints += 5;//SET the punctuation rules
+          totalPointsLbl.setText("Total points: " + totalPoints);
+          enableButtons();
+        }
         /** Letter options*/
-        for (int x = 0; x < 7; x++){
-          if(buttonClicked == letterBtns[x]){
-            currentWordContent += letterBtns[x].getText();
-            letterBtns[x].setEnabled(false);
-            maxIndexOfLettersEntered++;
-            indexesOfLettersEntered[maxIndexOfLettersEntered]=x;
+        for (int i = 0; i < 7; i++){
+          if(buttonClicked == letterBtns[i]){
+            previousWordState = currentWordContent;
+            currentWordContent += letterBtns[i].getText();
+            currentWordTF.setText(currentWordContent);
           }
         }
-        currentWordTF.setText(currentWordContent);
       }
       public void enableButtons(){
-        for(int x = 0; x<= maxIndexOfLettersEntered; x++){
-          int index = indexesOfLettersEntered[x];
+        for(int i = 0; i<= maxIndexOfLettersEntered; i++){
+          int index = indexesOfLettersEntered[i];
           letterBtns[index].setEnabled(true);
+          isButtonEnabled[index] = true;
         }
         maxIndexOfLettersEntered=-1;
       }
+  } //ToDo better naming
+
+  //Document Listener
+  private class TextChangeResponse implements DocumentListener{
+
+    public void insertUpdate(DocumentEvent e){
+      String currentWordContent = currentWordTF.getText();
+      char charArray[] = currentWordContent.toCharArray();
+      char insertedChar = charArray[e.getOffset()];
+      handleButtons(e, insertedChar, false);
+      previousWordState = currentWordContent;
+    }
+
+    public void removeUpdate(DocumentEvent e){
+      char removedChar = previousWordState.toCharArray()[e.getOffset()];
+      handleButtons(e, removedChar, true);
+      previousWordState = currentWordTF.getText();
+
+    }
+
+    public void changedUpdate(DocumentEvent e){
+      //nothing because plaintext components do not trigger these events
+    }
+
+    public void handleButtons(DocumentEvent e, char lastC, Boolean flag) {
+      Document doc = (Document)e.getDocument();
+      int len = doc.getLength();
+      int offset = e.getOffset();
+      char lastChar = lastC;
+      boolean flag2 = true;
+      int i = 0;
+      while(flag2 && i <7){
+        char buttonChar = letterBtns[i].getText().toString().toCharArray()[0];
+        if(lastChar == buttonChar && isButtonEnabled[i] == !flag){
+          isButtonEnabled[i] = flag;
+          letterBtns[i].setEnabled(flag);
+          System.out.println("vea pues");
+          if(!flag){//if we are adding a new letter
+            maxIndexOfLettersEntered++;
+            indexesOfLettersEntered[maxIndexOfLettersEntered]=i;
+          }else if(flag){
+            maxIndexOfLettersEntered--;
+          }
+          flag2 = false;
+        }
+        i++;
+      }
+
+    }
   }
 
   // --- main method ---
