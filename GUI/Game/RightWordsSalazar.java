@@ -47,14 +47,13 @@ public class RightWordsSalazar{
   private JPanel /*gameBackgroundPanel,*/ editOptionsPn, topPn, letterBankPn, wordCountPn, wordCountInnerPn;
   private JFrame gameFrame;
   private JButton letterBtns[] = new JButton[7], clearBtn, submitBtn, finishBtn;
-  private boolean isButtonEnabled[] = new boolean[7];
+  private boolean isButtonEnabled[] = new boolean[7], wasEnteredByButton = false, flag = true;
   private CAPSJTextField currentWordTF;
   private JLabel validWordsLbl, totalPointsLbl;
   private String alphabet[] = new String[]{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}, letterBank[] = new String[7], validWords = "";
   private String previousWordState=""; //this will store the previous state of the currentWordTF, before update the changes
   private int wordCount = 0, totalPoints = 0, maxIndexOfLettersEntered = -1, indexesOfLettersEntered[]=new int[7];
   private PictureBackgroundJPanel gameBackgroundPanel;
-
   private TitledBorder validWordsTitledBdr;//https://docs.oracle.com/javase/7/docs/api/javax/swing/BorderFactory.html#createTitledBorder(javax.swing.border.Border,%20java.lang.String,%20int,%20int,%20java.awt.Font
 
   // --- methods ---
@@ -288,7 +287,6 @@ public class RightWordsSalazar{
 
 
     /** inner JPanel container for the Word count Panel */
-
     wordCountInnerPn = new JPanel();
       wordCountInnerPn.setPreferredSize(new Dimension(710, 260));
       wordCountInnerPn.add(validWordsLbl, BorderLayout.PAGE_START);
@@ -332,9 +330,6 @@ public class RightWordsSalazar{
       if(buttonClicked == startBtn){
         instructionsFrame.hide();
         gameFrame.setVisible(true);
-
-
-
       }
 
       /** GAME */
@@ -352,11 +347,11 @@ public class RightWordsSalazar{
           validWordsLbl.setText(validWords);
           currentWordContent = "";
 
-          totalPoints += 5;//SET the punctuation rules
+          totalPoints += 5;//SET the point rules
           totalPointsLbl.setText("Total points: " + totalPoints);
           enableButtons();
         }
-
+        //When press enter in the currentWordTF
         if(buttonClicked == currentWordTF){
           System.out.println("Entered");
           wordCount++;
@@ -371,20 +366,24 @@ public class RightWordsSalazar{
         }
         /** Letter options*/
         for (int i = 0; i < 7; i++){
+          //boolean flag = false;
           if(buttonClicked == letterBtns[i]){
-            previousWordState = currentWordContent;
+            letterBtns[i].setEnabled(false);
+            wasEnteredByButton= true;
             currentWordContent += letterBtns[i].getText();
-            currentWordTF.setText(currentWordContent);
+            isButtonEnabled[i]= false;
           }
+
         }
+
+        currentWordTF.setText(currentWordContent);
       }
+
       public void enableButtons(){
-        for(int i = 0; i<= maxIndexOfLettersEntered; i++){
-          int index = indexesOfLettersEntered[i];
-          letterBtns[index].setEnabled(true);
-          isButtonEnabled[index] = true;
+        for(int i = 0; i< 7; i++){
+          isButtonEnabled[i] = true;
+          letterBtns[i].setEnabled(true);
         }
-        maxIndexOfLettersEntered=-1;
       }
   } //ToDo better naming
 
@@ -392,56 +391,59 @@ public class RightWordsSalazar{
   private class TextChangeResponse implements DocumentListener{
 
     public void insertUpdate(DocumentEvent e){
-      String currentWordContent = currentWordTF.getText();
-      char charArray[] = currentWordContent.toCharArray();
-      char insertedChar = charArray[e.getOffset()];
-      handleButtons(e, insertedChar, false);
-      previousWordState = currentWordContent;
+      if(wasEnteredByButton){
+        wasEnteredByButton = false;
+        return;
+      }
+      else{
+        String currentWordContent = currentWordTF.getText();
+        char charArray[] = currentWordContent.toCharArray();
+        char insertedChar = charArray[e.getOffset()];
+        int i = 0;
+        boolean flag = true;
+        while (flag && i<7){
+          char buttonChar = letterBtns[i].getText().toCharArray()[0];
+          if(buttonChar == insertedChar && isButtonEnabled[i]){
+            letterBtns[i].setEnabled(false);
+            isButtonEnabled[i]= false;
+            flag=false;
+          }
+          i++;
+        }
+        previousWordState = currentWordContent;
+      }
     }
 
     public void removeUpdate(DocumentEvent e){
-      char removedChar = previousWordState.toCharArray()[e.getOffset()];
-      handleButtons(e, removedChar, true);
-      previousWordState = currentWordTF.getText();
+      if (wasEnteredByButton){
+        wasEnteredByButton = false;
+        return;
+      }
+      char charArray[] = previousWordState.toCharArray();
+      char removedChar = charArray[e.getOffset()];
+
+      int i = 0;
+      boolean flag = true;
+      while (flag && i<7){
+        char buttonChar = letterBtns[i].getText().toCharArray()[0];
+        if(buttonChar == removedChar && !isButtonEnabled[i]){
+          letterBtns[i].setEnabled(true);
+          isButtonEnabled[i]= true;
+          flag=false;
+        }
+        i++;
+      }
 
     }
 
     public void changedUpdate(DocumentEvent e){
       //nothing because plaintext components do not trigger these events
     }
-
-    public void handleButtons(DocumentEvent e, char lastC, Boolean flag) {
-      Document doc = (Document)e.getDocument();
-      int len = doc.getLength();
-      int offset = e.getOffset();
-      char lastChar = lastC;
-      boolean flag2 = true;
-      int i = 0;
-      while(flag2 && i <7){
-        char buttonChar = letterBtns[i].getText().toString().toCharArray()[0];
-        if(lastChar == buttonChar && isButtonEnabled[i] == !flag){
-          isButtonEnabled[i] = flag;
-          letterBtns[i].setEnabled(flag);
-          System.out.println("vea pues");
-          if(!flag){//if we are adding a new letter
-            maxIndexOfLettersEntered++;
-            indexesOfLettersEntered[maxIndexOfLettersEntered]=i;
-          }else if(flag){
-            maxIndexOfLettersEntered--;
-          }
-          flag2 = false;
-        }
-        i++;
-      }
-
-    }
   }
 
   // --- main method ---
   public static void main(String[] args) {
     RightWordsSalazar test = new RightWordsSalazar();
-
-
 
 
   }

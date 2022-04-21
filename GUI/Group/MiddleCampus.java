@@ -14,7 +14,7 @@ public class MiddleCampus { // extends JPanel { ?
   // ----- attributes -----
   private JFrame frame;
   private PictureBackgroundJPanel background;
-  private JPanel scorePanel, headerPanel;
+  private JPanel scorePanel, headerPanel, testPanel;
   /*private JButton lillard, brown, hotchkiss, lib, carnegie, facman, north,
                   patterson, ravine, reid, lilychapel, blackstone, harlan, mohr,
                   backToMain, easterEgg1, easterEgg2; //JLabels? -M*/
@@ -30,7 +30,7 @@ public class MiddleCampus { // extends JPanel { ?
   private int heights[] = new int[]{41,22,46,45,84,39,79,48,90,83,71,74,117,133,110};
   private int xPixels[] = new int[]{130,175,243,334,426,587,319,637,530,575,473,450,279,193,164};
   private int yPixels[] = new int[]{95,56,76,18,4,26,121,100,160,295,290,377,392,363,250};
-
+  private String searchForBuilding = "";
 
 
 
@@ -89,8 +89,15 @@ public MiddleCampus() {
         buildings[i].setBounds(xPixels[i] + insets.right, yPixels[i] + insets.top, widths[i], heights[i]);
         buildings[i].setBackground(red);//Set the background color (because it seems
         buildings[i].setOpaque(false);//that setOpaque doesn't work on buttons without doing thsi line first)
+        buildings[i].setBorderPainted(false);
         background.add(buildings[i]);
     }
+    //test something
+    testPanel = new JPanel();
+    testPanel.setPsetPreferredSize(new Dimension(40,50));
+    testPanel.setBackground(Color.BLACK);
+    testPanel.addMouseListener(l);
+    background.add()
 
 
 
@@ -102,11 +109,29 @@ public MiddleCampus() {
     frame.add(background);
     frame.setVisible(true);
 
+  FollowTip toolTipWindow = new FollowTip("Click something", frame);
+    toolTipWindow.activate();
+
 
 }
 
+public void setSearchForBuilding(){
+  //suppose it was selected randomly
+  searchForBuilding = "My Building!!!";
+}
+
+public String getSearchBuilding(){
+  return searchForBuilding;
+}
+
+public JFrame getFrame(){
+  return frame;
+}
+
+public class MouseListener extends MouseEvent
+
   public static void main(String[] args) {
-    new MiddleCampus();
+    //new MiddleCampus();
   }
 
 }
