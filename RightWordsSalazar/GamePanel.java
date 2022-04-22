@@ -23,13 +23,15 @@ public class GamePanel extends PictureBackgroundJPanel{
 
   private JPanel  editOptionsPn, topPn, letterBankPn, wordCountPn, wordCountInnerPn, startButtonContainerPn, instructionsContainerPn, fillerPn, lineGapPn, divisionLine1Pn, divisionLine2Pn, divisionLineContainer1Pn, divisionLineContainer2Pn;
   private JButton letterBtns[] = new JButton[7], clearBtn, submitBtn, finishBtn;
-  private boolean wasEnteredByClick = false;
+  private boolean ignoreUpdate = false, isTextfieldEnabled = true;
   private CAPSJTextField currentWordTF;
   private JLabel validWordsLbl, totalPointsLbl, additionalInfoLbl;
   private GameBrain gameBrain = new GameBrain();
   private String  letterBank[] = gameBrain.getLetters();
   private ArrayList<String> validWords = new ArrayList<String>();
   private ArrayList<Integer> disabledButtonIndexes = new ArrayList<Integer>();
+
+  private ArrayList<Character> characters = new ArrayList<Character>();
   private String currentWordContent = ""; //this will store the previous state of the currentWordTF, before update the changes
   private int wordCount = 0, totalPoints = 0;
   private TitledBorder validWordsTitledBdr;//https://docs.oracle.com/javase/7/docs/api/javax/swing/BorderFactory.html#createTitledBorder(javax.swing.border.Border,%20java.lang.String,%20int,%20int,%20java.awt.Font
@@ -105,6 +107,8 @@ public class GamePanel extends PictureBackgroundJPanel{
         letterBtns[i].setPreferredSize(new Dimension(80,80));
         letterBtns[i].addActionListener(buttonResponse);
         letterBtns[i].setFocusable(false);
+        characters.add(letterBank[i].charAt(0));
+
       }
       finishBtn = new JButton("I give up!");
         finishBtn.setPreferredSize(new Dimension(400, 50));
@@ -138,7 +142,7 @@ public class GamePanel extends PictureBackgroundJPanel{
         //validWordsLbl.setOpaque(true);
 
       totalPointsLbl = new JLabel("Total Points: 0");
-        totalPointsLbl.setPreferredSize(new Dimension(730, 15));
+        totalPointsLbl.setPreferredSize(new Dimension(730, 18));
         totalPointsLbl.setFont(F4);
         totalPointsLbl.setForeground(C5);
         totalPointsLbl.setHorizontalAlignment(JLabel.CENTER);
@@ -223,45 +227,32 @@ public class GamePanel extends PictureBackgroundJPanel{
           wordCountPn.setOpaque(false);
           wordCountPn.setBorder(validWordsTitledBdr);
       }
+      //update the label with additional info types : normal(0), increase(1), decrease(2),
+      public void updateAdditionalInfoLabel(String note, String type){
+        switch (type){
+          case "normal":
+            additionalInfoLbl.setForeground(C5);
+            additionalInfoLbl.setBorder(BorderFactory.createMatteBorder(1, 10, 1, 10, C5));
+            break;
+          case "increase":
+            additionalInfoLbl.setForeground(GREEN);
+            additionalInfoLbl.setBorder(BorderFactory.createMatteBorder(1, 10, 1, 10, GREEN));
+            break;
+          case "penalty":
+            additionalInfoLbl.setForeground(RED);
+            additionalInfoLbl.setBorder(BorderFactory.createMatteBorder(1, 10, 1, 10, RED));
+            break;
+          case "error":
+            additionalInfoLbl.setForeground(RED);
+            additionalInfoLbl.setBorder(BorderFactory.createMatteBorder(1, 10, 1, 10, RED));
+            break;
+          default:
+            break;
 
-    // Button listeners
-    private class ButtonResponse implements ActionListener{
-      public void actionPerformed(ActionEvent click){
-        Object buttonClicked = click.getSource();
-          /** clearBtn*/
-          if(buttonClicked == clearBtn){
-            clearTextField();
-          }
-          /** submitBtn*/
-          if(buttonClicked == submitBtn){
-            tryToSubmitWord("Button.");
-          }
-          //When press enter in the currentWordTF
-          if(buttonClicked == currentWordTF){
-            tryToSubmitWord("Enter");
-          }
-          /** Letter options*/  // B I R S I W A
-          for (int i = 0; i < 7; i++){ //de 0 a 7
-            if(buttonClicked == letterBtns[i]){ //S 3
-              letterBtns[i].setEnabled(false);
-              disabledButtonIndexes.add(i); //3
-              wasEnteredByClick= true;
-              currentWordContent += letterBtns[i].getText();
-              currentWordTF.setText(currentWordContent);
-              break;
-            }
-
-          }
         }
-
-      public void clearTextField(){
-        wasEnteredByClick = true;
-        currentWordContent = "";
-        enableButtons();
-        currentWordTF.setText(currentWordContent);
+        additionalInfoLbl.setText(note);
 
       }
-
       public void enableButtons(){
         for(int i = 0; i< 7; i++){
           if(disabledButtonIndexes.contains(Integer.valueOf(i))){
@@ -271,6 +262,73 @@ public class GamePanel extends PictureBackgroundJPanel{
           }
 
         }
+      }
+
+
+      public void disableButtons(){
+        for(int i = 0; i< 7; i++){
+          if(!disabledButtonIndexes.contains(Integer.valueOf(i))){
+            letterBtns[i].setEnabled(false);
+            disabledButtonIndexes.add(i);
+          }
+
+        }
+      }
+
+    // Button listeners
+    private class ButtonResponse implements ActionListener{
+      public void actionPerformed(ActionEvent click){
+        Object buttonClicked = click.getSource();
+          /** clearBtn*/
+          if(buttonClicked == clearBtn){
+            System.out.println("Is the thing enabled? " + currentWordTF.isEnabled() );
+            if(!isTextfieldEnabled){
+              clearTextField();
+              enableButtons();
+              currentWordTF.setEnabled(true);
+              isTextfieldEnabled = true;
+            } else{
+              clearTextField();
+            }
+
+
+
+          }
+          /** submitBtn*/
+          if(buttonClicked == submitBtn){
+            if(isTextfieldEnabled){
+              tryToSubmitWord("Button.");
+            }
+          }
+          //When press enter in the currentWordTF
+          if(buttonClicked == currentWordTF){
+            if(isTextfieldEnabled){
+              tryToSubmitWord("Enter");
+            }
+          }
+          /** Letter options*/  // B I R S I W A
+          for (int i = 0; i < 7; i++){ //de 0 a 7
+            if(disabledButtonIndexes.contains(Integer.valueOf(i))){
+
+            }
+            if(buttonClicked == letterBtns[i]){ //S 3
+              letterBtns[i].setEnabled(false);
+              disabledButtonIndexes.add(i); //3
+              ignoreUpdate= true;
+              currentWordContent += letterBtns[i].getText();
+              currentWordTF.setText(currentWordContent);
+              break;
+            }
+
+          }
+        }
+
+      public void clearTextField(){
+        ignoreUpdate = true;
+        currentWordContent = "";
+        enableButtons();
+        currentWordTF.setText(currentWordContent);
+
       }
 
       public void updateScoreAndWordCount(){
@@ -285,7 +343,6 @@ public class GamePanel extends PictureBackgroundJPanel{
         validWordsLbl.setText(validWordsToString());
         updateScoreAndWordCount();
         clearTextField();
-        System.out.println("Submited by " + type);
       }
 
       public void tryToSubmitWord(String type){
@@ -298,17 +355,23 @@ public class GamePanel extends PictureBackgroundJPanel{
               }else{
                 updateAdditionalInfoLabel("Hey -_- I saw what you did there!! you submited \"" + currentWordTF.getText() + "\" before. Don't try to cheat, >:( -2 points" , "penalty");
                 totalPoints-=2;
+                totalPointsLbl.setText("Score: " + totalPoints + ". Words: " + wordCount);
+
                 clearTextField();
               }
 
             } else{
               updateAdditionalInfoLabel("It seems like you didn't use the word bank options to spell \"" + currentWordTF.getText() + "\". -2 points", "penalty");
               totalPoints-=2;
+              totalPointsLbl.setText("Score: " + totalPoints + ". Words: " + wordCount);
+
               clearTextField();
             }
           } else{
             updateAdditionalInfoLabel(("\"" + currentWordTF.getText() + "\" is not a valid word. " + " -2 points"), "penalty");
             totalPoints-=2;
+            totalPointsLbl.setText("Score: " + totalPoints + ". Words: " + wordCount);
+
             clearTextField();
           }
         } else{
@@ -330,29 +393,6 @@ public class GamePanel extends PictureBackgroundJPanel{
         return s;
       }
 
-      //update the label with additional info types : normal(0), increase(1), decrease(2),
-      public void updateAdditionalInfoLabel(String note, String type){
-        switch (type){
-          case "normal":
-            additionalInfoLbl.setForeground(C5);
-            additionalInfoLbl.setBorder(BorderFactory.createMatteBorder(1, 10, 1, 10, C5));
-            break;
-          case "increase":
-            additionalInfoLbl.setForeground(GREEN);
-            additionalInfoLbl.setBorder(BorderFactory.createMatteBorder(1, 10, 1, 10, GREEN));
-            break;
-          case "penalty":
-            additionalInfoLbl.setForeground(RED);
-            additionalInfoLbl.setBorder(BorderFactory.createMatteBorder(1, 10, 1, 10, RED));
-            break;
-          default:
-            break;
-
-        }
-        additionalInfoLbl.setText(note);
-
-      }
-
 
 
     }
@@ -361,24 +401,29 @@ public class GamePanel extends PictureBackgroundJPanel{
     private class TextChangeResponse implements DocumentListener{
 
       public void insertUpdate(DocumentEvent e){
-        if(wasEnteredByClick){
-          wasEnteredByClick = false;
+        if(ignoreUpdate){
+          ignoreUpdate = false;
           return;
         }// 0,1, 2, 3
         else{ // B I R S I W A
 
           String currentInput = currentWordTF.getText();//IWAB
-          System.out.println(" current "+ currentInput);
-          for( int i = 0; i<7; i++){
-            if(!disabledButtonIndexes.contains(Integer.valueOf(i))){
-              char insertedChar = currentInput.charAt(e.getOffset());//B
-              System.out.println("Character:" + insertedChar);
-              char buttonChar = letterBtns[i].getText().charAt(0);
-              if(buttonChar == insertedChar){
-                letterBtns[i].setEnabled(false);
-                disabledButtonIndexes.add(i);
-                currentWordContent = currentInput;
-                break;
+          char insertedChar = currentInput.charAt(e.getOffset());//B
+          if(!characters.contains(Character.valueOf(insertedChar))){
+            updateAdditionalInfoLabel("\"" + insertedChar + "\" is not in the Letter Bank Options. Please click on \"Clear\" before continuing", "error");
+            disableButtons();
+            currentWordTF.setEditable(false);
+
+          }else{
+            for( int i = 0; i<7; i++){
+              if(!disabledButtonIndexes.contains(Integer.valueOf(i))){
+                char buttonChar = characters.get(i);
+                if(buttonChar == insertedChar){
+                  letterBtns[i].setEnabled(false);
+                  disabledButtonIndexes.add(i);
+                  currentWordContent = currentInput;
+                  break;
+                }
               }
             }
           }
@@ -386,11 +431,13 @@ public class GamePanel extends PictureBackgroundJPanel{
       }
 
       public void removeUpdate(DocumentEvent e){
-        if (wasEnteredByClick){
-          wasEnteredByClick = false;
+        if (ignoreUpdate){
+          ignoreUpdate = false;
           return;
         }else { // IWAB (B I R S I W A)
+
           String previousWord = currentWordContent;
+          System.out.println("Document: " + e.getDocument().toString());
           for(int i = 0; i < 7; i++){
             if(disabledButtonIndexes.contains(Integer.valueOf(i))){
               char removedChar = previousWord.charAt(e.getOffset());

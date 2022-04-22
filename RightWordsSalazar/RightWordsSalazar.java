@@ -22,10 +22,6 @@ public class RightWordsSalazar{
   public RightWordsSalazar(){
     instructionsPanel = new InstructionsPanel();
 
-    /*instructionWindow = new Instructions();
-    if(instructionWindow.getStartBtnFlag()){
-      gameWindow.setFrameVisible();
-    }*/
   }
 
   /** main method */

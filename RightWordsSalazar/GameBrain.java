@@ -21,9 +21,10 @@ public class GameBrain{
   "M","M","N","N","N","N","N","N","O","O","O","O","O","O","O","O","P","P","Q",
   "R","R","R","R","R","R","S","S","S","S","T","T","T","T","T","T","U","U","U",
   "U","V","V","W","W","X","Y","Y","Z"};
-  
+
   private Random rand = new Random();
   private ArrayList<String> letters;
+  private ArrayList<Character> characters;
 
   /** constructor */
   public GameBrain(){}
@@ -84,6 +85,7 @@ public class GameBrain{
 
     return valid;
   }
+
 
   // determines the score of a string
   public int scoreOf(String word){

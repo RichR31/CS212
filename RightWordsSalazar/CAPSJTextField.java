@@ -33,8 +33,11 @@ public class CAPSJTextField extends JTextField{
       for (int i = 0; i < caps.length; i++){
           caps[i] = Character.toUpperCase(caps[i]);
       }
+      //System.out.println("In JTextField. Offset : " + offs );
       super.insertString(offs, new String(caps), a);
     }
 
   }
+
+
 }

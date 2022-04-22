@@ -26,12 +26,12 @@ public class InstructionsPanel{
                                     "many actual words as you can ;)" ,
                                     "I will score it based on the scrabble point values",
                                     "Oh! BTW watch out 'cause you will lose points when",
-                                    "submiting an invalid word. Don't overthink it, you",
-                                    "will get it on the way",
+                                    "submiting an invalid word. Don't overthink it tho",
+                                    "you will get it on the way",
                                     "Just click \"Start!\""
                                   };
     private JPanel startButtonContainerPn, instructionsContainerPn, fillerPn, lineGapPn, divisionLine1Pn, divisionLine2Pn, divisionLineContainer1Pn, divisionLineContainer2Pn;
-    private JLabel welcomeLbl, gameTitleLbl, instructionsLbl, instructionsArray[] = new JLabel[instructions.length];
+    private JLabel welcomeLbl, gameTitleLbl, instructionsLbl, additionalLbl1, additionalLbl2, instructionsArray[] = new JLabel[instructions.length];
     private JButton startBtn;
     private JFrame instructionsFrame;
     private PictureBackgroundJPanel instructionsPanel;
@@ -90,6 +90,16 @@ public class InstructionsPanel{
         gameTitleLbl.setFont(F3);
         gameTitleLbl.setForeground(Color.WHITE);
         gameTitleLbl.setHorizontalAlignment(JLabel.CENTER);
+
+      additionalLbl1 = new JLabel("(aka scrabble for lonely people)");
+        additionalLbl1.setFont(F5);
+        additionalLbl1.setForeground(Color.WHITE);
+        additionalLbl1.setHorizontalAlignment(JLabel.CENTER);
+
+      additionalLbl2 = new JLabel("PS: Scrabble pls don't sue us");
+        additionalLbl2.setFont(F5);
+        additionalLbl2.setForeground(Color.WHITE);
+        additionalLbl2.setHorizontalAlignment(JLabel.LEFT);
     }
 
     public void setStartButtonContainer(){
@@ -128,6 +138,7 @@ public class InstructionsPanel{
             instructionsArray[i].setPreferredSize(new Dimension(580, 25));
             instructionsArray[i].setFont(new Font("Courier", Font.PLAIN, 18));
             instructionsArray[i].setForeground(Color.WHITE);
+            instructionsArray[i].setHorizontalAlignment(JLabel.CENTER);
           }
       }
 
@@ -135,13 +146,16 @@ public class InstructionsPanel{
       instructionsPanel = new PictureBackgroundJPanel("instructionsbg.jpg");
         instructionsPanel.add(welcomeLbl);
         instructionsPanel.add(gameTitleLbl);
+        instructionsPanel.add(additionalLbl1);
         instructionsPanel.add(instructionsContainerPn);
+        instructionsPanel.add(additionalLbl2);
         instructionsPanel.add(startButtonContainerPn);
     }
 
     public void setJDialog(){
       gameFrame = new Game();
       jDialog = new JDialog(gameFrame);
+        jDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         jDialog.add(instructionsPanel);
         jDialog.setSize(FRAME_W, FRAME_H);
         jDialog.setVisible(true);
